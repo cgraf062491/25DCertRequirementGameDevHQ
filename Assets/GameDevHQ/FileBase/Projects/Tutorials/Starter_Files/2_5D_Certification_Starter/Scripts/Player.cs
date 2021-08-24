@@ -15,6 +15,9 @@ public class Player : MonoBehaviour
 
     private bool _jumping = false;
     private bool _hanging = false;
+    private bool _rolling = false;
+    private bool _onLadder = false;
+    private bool _nearLadder = false;
 
     private PlatformLedge _activeLedge;
 
@@ -39,7 +42,7 @@ public class Player : MonoBehaviour
 
     void CalculateMovement()
     {
-        if(_controller.isGrounded == true)
+        if(_controller.isGrounded == true && _rolling == false)
         {
             if(_jumping == true)
             {
@@ -70,6 +73,12 @@ public class Player : MonoBehaviour
                 _jumping = true;
                 _anim.SetBool("Jumping", true);
             }
+
+            if(Input.GetKeyDown(KeyCode.Z))
+            {
+                _rolling = true;
+                _anim.SetBool("Rolling", true);
+            }
         }
 
         _direction.y -= _gravity * Time.deltaTime;
@@ -93,5 +102,12 @@ public class Player : MonoBehaviour
         transform.position = _activeLedge.GetStandPos();
         _anim.SetBool("LedgeGrab", false);
         _controller.enabled = true;
+    }
+
+    public void RollComplete()
+    {
+        Debug.Log("Rolling complete");
+        _anim.SetBool("Rolling", false);
+        _rolling = false;
     }
 }
