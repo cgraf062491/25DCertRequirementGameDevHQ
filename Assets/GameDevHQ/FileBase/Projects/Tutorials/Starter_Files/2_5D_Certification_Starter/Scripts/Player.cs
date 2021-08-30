@@ -20,6 +20,9 @@ public class Player : MonoBehaviour
     private bool _nearLadder = false;
 
     private PlatformLedge _activeLedge;
+    private Ladder _activeLadder;
+    private float _activeLadderTop;
+    private float _activeLadderBottom;
 
     // Start is called before the first frame update
     void Start()
@@ -35,8 +38,17 @@ public class Player : MonoBehaviour
 
         if(Input.GetKeyDown(KeyCode.E) && _hanging == true)
         {
-            Debug.Log("climbing");
+            //Debug.Log("climbing");
             _anim.SetTrigger("ClimbUp");
+        }
+
+        if(Input.GetKeyDown(KeyCode.E) && _nearLadder == true && _onLadder == false)
+        {
+        	GetOnLadder();
+        }
+        else if(Input.GetKeyDown(KeyCode.E) && _nearLadder == true && _onLadder == true)
+        {
+        	GetOffLadder();
         }
     }
 
@@ -61,7 +73,14 @@ public class Player : MonoBehaviour
                 }
                 else
                 {
-                    facing.y = 180.0f;
+                	if(_onLadder == true)
+                	{
+                		facing.y = 0.0f;
+                	}
+                	else
+                	{
+                		facing.y = 180.0f;
+                	}
                 }
 
                 transform.localEulerAngles = facing;
@@ -80,8 +99,21 @@ public class Player : MonoBehaviour
                 _anim.SetBool("Rolling", true);
             }
         }
+        else if(_onLadder == true)
+        {
+        	float y_move = Input.GetAxisRaw("Vertical");
+        	_direction = new Vector3(0, y_move, 0);
+        	_anim.SetFloat("Speed", Mathf.Abs(y_move));
 
-        _direction.y -= _gravity * Time.deltaTime;
+        	Vector3 ladderClamp = transform.position;
+        	ladderClamp.y = Mathf.Clamp(ladderClamp.y, _activeLadderBottom, _activeLadderTop);
+        	transform.position = ladderClamp;
+        }
+
+        if(_onLadder == false)
+        {
+        	_direction.y -= _gravity * Time.deltaTime;
+        }
         _controller.Move(_direction * Time.deltaTime * _speed); 
     }
 
@@ -104,9 +136,38 @@ public class Player : MonoBehaviour
         _controller.enabled = true;
     }
 
+    public void NearLadder(Ladder current_ladder, float ladderTop, float ladderBottom)
+    {
+    	_nearLadder = true;
+    	_activeLadder = current_ladder;
+    	_activeLadderTop = ladderTop;
+    	_activeLadderBottom = ladderBottom;
+    	//Debug.Log("Ladder top: " + _activeLadderTop);
+    }
+
+    public void NotNearLadder()
+    {
+    	_nearLadder = false;
+    }
+
+    void GetOnLadder()
+    {
+    	_onLadder = true;
+    	_anim.SetBool("OnLadder", true);
+    	transform.position = _activeLadder.GetGrabPos();
+    }
+
+    void GetOffLadder()
+    {
+    	_onLadder = false;
+    	_anim.SetBool("OnLadder", false);
+    	transform.position = _activeLadder.GetStandPos();
+    }
+
+
     public void RollComplete()
     {
-        Debug.Log("Rolling complete");
+        //Debug.Log("Rolling complete");
         _anim.SetBool("Rolling", false);
         _rolling = false;
     }
